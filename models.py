@@ -310,5 +310,3 @@ def test_both():
     D_logits = D(fake_img)
     print(D_logits)
     print(f"Max: {torch.max(D_logits)}, Min: {torch.min(D_logits)}")
-
-test_both()
