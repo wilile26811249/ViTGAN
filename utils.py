@@ -1,14 +1,13 @@
-from image_dataset import CrypkoDataset
+from image_dataset import CrypkoDataset, InfiniteSampler
 
 import os
 import glob
+from torch.utils.data import DataLoader
 import torchvision
 import torchvision.transforms as T
 
 def get_dataset(root, img_size = 64):
     fnames = glob.glob(os.path.join(root, '*'))
-    # 1. Resize the image to (64, 64)
-    # 2. Linearly map [0, 1] to [-1, 1]
     compose = [
         T.ToPILImage(),
         T.Resize((img_size, img_size)),
@@ -18,6 +17,19 @@ def get_dataset(root, img_size = 64):
     transform = T.Compose(compose)
     dataset = CrypkoDataset(fnames, transform)
     return dataset
+
+
+def get_dataloader(root, img_size = 64, batch_size = 64):
+    data = get_dataset(root, img_size)
+    data_loader = iter(
+        DataLoader(
+            data,
+            batch_size = batch_size,
+            num_workers = 1,
+            sampler = InfiniteSampler(data)
+        )
+    )
+    return data_loader
 
 
 def test(root_dir = "crypko_data/faces/"):
