@@ -1,7 +1,7 @@
 # ViTGAN: Training GANs with Vision Transformers
 A PyTorch implementation of ViTGAN based on paper [ViTGAN: Training GANs with Vision Transformers](https://arxiv.org/abs/2107.04589v1).
 
-![Network Architecture image from the paper](model_arch.png)
+![Network Architecture image from the paper](model_arch.jpg)
 
 
 ---
