@@ -30,12 +30,12 @@ def train(generator, generator_s, discriminator, optim_g, optim_d, data_loader, 
         r_img = next(data_loader).to(device)
         r_label = torch.ones(args.batch_size).to(device)
         r_logit = discriminator(r_img).flatten()
-        print(r_logit.shape, r_label.shape)
         lossD_real = criterion(r_logit, r_label)
         lossD_real.backward()
 
         # Forward + Backward with fake images
-        f_img = generator(torch.FloatTensor(np.random.normal(0, 1, (args.batch_size, args.latent_dim))).to(device))
+        latent_vector = torch.FloatTensor(np.random.normal(0, 1, (args.batch_size, args.latent_dim))).to(device)
+        f_img = generator(latent_vector)
         f_label = torch.zeros(args.batch_size).to(device)
         f_logit = discriminator(f_img).flatten()
         lossD_fake = criterion(f_logit, f_label)
@@ -55,18 +55,20 @@ def train(generator, generator_s, discriminator, optim_g, optim_d, data_loader, 
         exp_mov_avg(generator_s, generator, global_step = step)
 
         if step % args.sample_interval == 0:
-            generator_s.eval()
-            vis = generator_s(fixed_noise).detach().cpu()
+            generator.eval()
+            vis = generator(fixed_noise).detach().cpu()
             vis = make_grid(vis, nrow = 4, padding = 5, normalize = True)
             vis = T.ToPILImage()(vis)
             vis.save('samples/vis{:05d}.jpg'.format(step))
-            generator_s.train()
+            generator.train()
+            print("Save sample to samples/vis{:05d}.jpg".format(step))
 
         if (step + 1) % args.sample_interval == 0 or step == 0:
             # Save the checkpoints.
             torch.save(generator.state_dict(), 'weights/Generator.pth')
             torch.save(generator_s.state_dict(), 'weights/Generator_ema.pth')
             torch.save(discriminator.state_dict(), 'weights/Discriminator.pth')
+            print("Save model state.")
 
 
 if __name__ == '__main__':
@@ -75,8 +77,8 @@ if __name__ == '__main__':
                         help = "Number of steps for training (Default: 100000)")
     parser.add_argument("--batch-size", type = int, default = 128,
                         help = "Size of each batches (Default: 128)")
-    parser.add_argument("--lr", type = float, default = 2e-3,
-                        help = "Learning rate (Default: 2e-3)")
+    parser.add_argument("--lr", type = float, default = 0.002,
+                        help = "Learning rate (Default: 0.002)")
     parser.add_argument("--beta1", type = float, default = 0.0,
                         help = "Coefficients used for computing running averages of gradient and its square")
     parser.add_argument("--beta2", type = float, default = 0.99,
@@ -97,9 +99,6 @@ if __name__ == '__main__':
 
     # Dataloader
     data_loader = utils.get_dataloader(args.data_dir, batch_size = args.batch_size)
-    # grid_img = torchvision.utils.make_grid(next(data_loader), nrow = 4)
-    # torchvision.utils.save_image(grid_img, "sample.jpg")
-    # print("Save image to sample.jpg from CryphoDataset.")
 
 
     # Create the log folder
@@ -108,7 +107,7 @@ if __name__ == '__main__':
 
     # Initialize Generator and Discriminator
     netG = models.Generator().to(device)
-    netG_s = copy.deepcopy(netG).to(device)
+    netG_s = copy.deepcopy(netG)
     netD = models.Discriminator().to(device)
 
     # Loss function
@@ -123,4 +122,4 @@ if __name__ == '__main__':
     )
 
     # Start Training
-    train(netG, netG_s, netD, optimizer_g, optimizer_d, data_loader, device)
+    train(netG_s, netG, netD, optimizer_g, optimizer_d, data_loader, device)
