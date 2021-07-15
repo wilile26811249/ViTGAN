@@ -1,9 +1,7 @@
-import os
-import glob
-
+import torch
 import torchvision
 import torchvision.transforms as T
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, Sampler
 
 class CrypkoDataset(Dataset):
     def __init__(self, fnames, transform):
@@ -21,3 +19,15 @@ class CrypkoDataset(Dataset):
 
     def __len__(self):
         return self.num_samples
+
+
+class InfiniteSampler(Sampler):
+    def __init__(self, data_source):
+        super(InfiniteSampler, self).__init__(data_source)
+        self.N = len(data_source)
+
+
+    def __iter__(self):
+        while True:
+            for idx in torch.randperm(self.N):
+                yield idx
