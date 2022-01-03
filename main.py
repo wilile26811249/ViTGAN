@@ -122,4 +122,4 @@ if __name__ == '__main__':
     )
 
     # Start Training
-    train(netG_s, netG, netD, optimizer_g, optimizer_d, data_loader, device)
+    train(netG, netG_s, netD, optimizer_g, optimizer_d, data_loader, device)
